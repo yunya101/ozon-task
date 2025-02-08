@@ -1,0 +1,19 @@
+package config
+
+import (
+	"fmt"
+	"runtime/debug"
+)
+
+func ErrorLog(err error) {
+	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
+
+	errLog.Output(2, trace)
+
+}
+
+func InfoLog(info string) {
+	trace := fmt.Sprintf("%s\n%s", info, debug.Stack())
+
+	infoLog.Output(2, trace)
+}
