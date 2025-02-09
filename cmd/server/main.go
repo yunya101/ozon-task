@@ -14,6 +14,7 @@ import (
 	"github.com/yunya101/ozon-task/internal/config"
 	data "github.com/yunya101/ozon-task/internal/data/postgres"
 	rdb "github.com/yunya101/ozon-task/internal/data/redis"
+	graphstruct "github.com/yunya101/ozon-task/internal/graphQL"
 	"github.com/yunya101/ozon-task/internal/service"
 	"github.com/yunya101/ozon-task/pkg/cheker"
 )
@@ -42,6 +43,8 @@ func NewApp() *Application {
 	r := mux.NewRouter()
 	controller.SetRouter(r)
 
+	graph := &graphstruct.GraphQlQueries{}
+
 	db := ConnectToPostgres()
 	rDB := ConnectToRedis()
 
@@ -59,6 +62,7 @@ func NewApp() *Application {
 
 	postService := &service.PostService{}
 	postService.SetRepo(postRepo)
+	graph.SetService(postService)
 
 	commsService := &service.CommsService{}
 	commsRepo.SetDB(db)
@@ -74,6 +78,7 @@ func NewApp() *Application {
 	controller.SetUserService(userService)
 	controller.SetCommsService(commsService)
 	controller.SetPostService(postService)
+	controller.SetGraph(graph)
 
 	ch := &cheker.Cheker{}
 	ch.SetRedis(repoRedis)

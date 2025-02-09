@@ -2,10 +2,15 @@ package web
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/graphql-go/graphql"
+	"github.com/graphql-go/handler"
+	"github.com/yunya101/ozon-task/internal/config"
+	graphstruct "github.com/yunya101/ozon-task/internal/graphQL"
 	"github.com/yunya101/ozon-task/internal/model"
 	"github.com/yunya101/ozon-task/internal/service"
 )
@@ -15,6 +20,11 @@ type Controller struct {
 	postService  *service.PostService
 	commsService *service.CommsService
 	userService  *service.UserService
+	graph        *graphstruct.GraphQlQueries
+}
+
+func (c *Controller) SetGraph(g *graphstruct.GraphQlQueries) {
+	c.graph = g
 }
 
 func (c *Controller) SetPostService(s *service.PostService) {
@@ -35,6 +45,31 @@ func (c *Controller) SetRouter(r *mux.Router) {
 
 func (c *Controller) SetHandles() {
 
+	c.graph.InitUserType()
+	c.graph.InitCommentType()
+	c.graph.InitPostType()
+
+	query := c.graph.GetLastest(graphstruct.PostType, 0)
+
+	if query == nil || graphstruct.PostType == nil || graphstruct.CommentType == nil || graphstruct.UserType == nil {
+		log.Fatal("Something not init")
+	}
+
+	shema, err := graphql.NewSchema(
+		graphql.SchemaConfig{
+			Query: query,
+		},
+	)
+
+	if err != nil {
+		config.ErrorLog(err)
+	}
+
+	test := handler.New(&handler.Config{
+		Schema: &shema,
+		Pretty: true,
+	})
+
 	c.router.HandleFunc("/", c.getLastest).Methods("GET")
 	c.router.HandleFunc("/sub", c.getSubsPosts).Methods("GET")
 	c.router.HandleFunc("/post", c.createPost).Methods("POST")
@@ -42,6 +77,8 @@ func (c *Controller) SetHandles() {
 	c.router.HandleFunc("/post/sub", c.subscribe).Methods("POST")
 	c.router.HandleFunc("/post/comment", c.addComment).Methods("POST")
 	c.router.HandleFunc("/user", c.addUser).Methods("POST")
+
+	c.router.Handle("/test", test)
 
 }
 
