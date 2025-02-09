@@ -4,7 +4,7 @@ import "time"
 
 type Post struct {
 	ID              int64      `json:"id"`
-	Author          *User      `json:"author"`
+	Author          int64      `json:"author"`
 	Title           string     `json:"title"`
 	Text            string     `json:"text"`
 	Subs            []*User    `json:"subs"`
@@ -16,5 +16,5 @@ type Post struct {
 }
 
 func (p *Post) CalcPopularity() {
-	p.Popularity = float64(p.CountComms) * float64(time.Since(p.LastCommentTime).Hours())
+	p.Popularity = float64(p.CountComms) * float64(time.Since(p.LastCommentTime).Hours()+1)
 }

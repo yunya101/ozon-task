@@ -16,9 +16,15 @@ func (r *CommentRepo) SetDB(db *sql.DB) {
 
 func (r *CommentRepo) InsertComment(com *model.Comment) error {
 	stmt := `INSERT INTO comments (author, text, post, parent, createAt)
-	VALUES ($1, $2, $3, $3, $4, $5)`
+	VALUES ($1, $2, $3, $4, $5)`
 
-	_, err := r.db.Exec(stmt, com.Author, com.Text, com.PostID, com.ParentID, com.CreatedAt)
+	var err error
+
+	if com.ParentID > 0 {
+		_, err = r.db.Exec(stmt, com.Author, com.Text, com.PostID, com.ParentID, com.CreatedAt)
+	} else {
+		_, err = r.db.Exec(stmt, com.Author, com.Text, com.PostID, nil, com.CreatedAt)
+	}
 
 	if err != nil {
 		return err

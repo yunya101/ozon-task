@@ -2,15 +2,15 @@ package service
 
 import (
 	"github.com/yunya101/ozon-task/internal/config"
-	repository "github.com/yunya101/ozon-task/internal/data"
+	data "github.com/yunya101/ozon-task/internal/data/postgres"
 	"github.com/yunya101/ozon-task/internal/model"
 )
 
 type UserService struct {
-	repo repository.UserRepository
+	repo *data.UserRepo
 }
 
-func (s *UserService) SetRepo(r repository.UserRepository) {
+func (s *UserService) SetRepo(r *data.UserRepo) {
 	s.repo = r
 }
 
@@ -20,6 +20,7 @@ func (s *UserService) AddUser(user *model.User) error {
 		return err
 	}
 
+	config.InfoLog("new user added")
 	return nil
 }
 
@@ -29,6 +30,8 @@ func (s *UserService) UpdateUser(user *model.User) error {
 		return err
 	}
 
+	config.InfoLog("user was updated")
+
 	return nil
 }
 
@@ -37,6 +40,8 @@ func (s *UserService) DeleteUserById(id int64) error {
 		config.ErrorLog(err)
 		return err
 	}
+
+	config.InfoLog("user was deleted")
 
 	return nil
 }

@@ -13,7 +13,6 @@ func ErrorLog(err error) {
 }
 
 func InfoLog(info string) {
-	trace := fmt.Sprintf("%s\n%s", info, debug.Stack())
 
-	infoLog.Output(2, trace)
+	infoLog.Println(info)
 }

@@ -7,8 +7,9 @@ import (
 )
 
 var (
-	ErrEmptyText = errors.New("empty text")
-	ErrLimitText = errors.New("character count exceeded")
+	ErrEmptyText   = errors.New("empty text")
+	ErrLimitText   = errors.New("character count exceeded")
+	ErrDoesntExist = errors.New("data doesn't exist")
 )
 
 func CheckPost(post *model.Post) error {
