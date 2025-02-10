@@ -1,0 +1,43 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+scalar Int64
+
+type Post {
+  id: Int64!
+  author: Int64!
+  title: String!
+  text: String!
+  comments: [Comment!]!
+  countComments: Int!
+  isCommented: Boolean!
+}
+
+type Comment {
+  id: Int64!
+  author: Int64!
+  text: String!
+  postID: Int64!
+  comments: [Comment!]!
+  parent: Int64!
+}
+
+type User {
+  id: Int64!
+  username: String!
+}
+
+type Query {
+  lastest(page: Int64!): [Post!]!
+  getPostById(postID: Int64!): Post!
+  getSubsPosts(userID: Int64!): [Post!]!
+}
+
+type Mutation {
+  addComment(postID: Int64!, parent: Int64!, text: String!, author: Int64!): Comment!
+}
+
+type Subscription {
+  commentAdded(postID: Int64!): Comment!
+}
