@@ -7,9 +7,11 @@ import (
 )
 
 var (
-	ErrEmptyText   = errors.New("empty text")
-	ErrLimitText   = errors.New("character count exceeded")
-	ErrDoesntExist = errors.New("data doesn't exist")
+	ErrEmptyText     = errors.New("empty text")
+	ErrLimitText     = errors.New("character count exceeded")
+	ErrDoesntExist   = errors.New("data doesn't exist")
+	ErrCannotComment = errors.New("now allowed to comment on this post")
+	ErrNotFound      = errors.New("not found")
 )
 
 func CheckPost(post *model.Post) error {

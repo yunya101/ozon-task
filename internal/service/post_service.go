@@ -4,26 +4,23 @@ import (
 	"time"
 
 	"github.com/yunya101/ozon-task/internal/config"
-	data "github.com/yunya101/ozon-task/internal/data/postgres"
-	redis "github.com/yunya101/ozon-task/internal/data/redis"
+	data "github.com/yunya101/ozon-task/internal/data"
 	apperrors "github.com/yunya101/ozon-task/internal/errors"
 	"github.com/yunya101/ozon-task/internal/model"
 )
 
 type PostService struct {
-	repo  *data.PostRepo
-	redis *redis.RedisRepo
+	repo data.PostRepository
 }
 
-func NewPostService(repo *data.PostRepo, redis *redis.RedisRepo) *PostService {
+func NewPostService(r data.PostRepository) *PostService {
 	return &PostService{
-		repo:  repo,
-		redis: redis,
+		repo: r,
 	}
 }
 
 func (s *PostService) GetLastestPosts(page int) ([]*model.Post, error) {
-	posts, err := s.repo.GetLastestPosts(page)
+	posts, err := s.repo.Lastest(page)
 
 	if err != nil {
 		config.ErrorLog(err)
@@ -44,7 +41,7 @@ func (s *PostService) AddPost(post *model.Post) error {
 
 	post.LastCommentTime = time.Now()
 
-	err := s.repo.InsertPost(post)
+	err := s.repo.Insert(post)
 
 	if err != nil {
 		config.ErrorLog(err)
@@ -58,18 +55,7 @@ func (s *PostService) AddPost(post *model.Post) error {
 
 func (s *PostService) GetPostById(id int64) (*model.Post, error) {
 
-	post, exist, err := s.redis.GetPostById(id)
-
-	if err != nil {
-		config.ErrorLog(err)
-		return nil, err
-	}
-
-	if exist {
-		return post, nil
-	}
-
-	post, err = s.repo.GetPostById(id)
+	post, err := s.repo.GetById(id)
 
 	if err != nil {
 		config.ErrorLog(err)

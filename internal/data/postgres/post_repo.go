@@ -19,7 +19,7 @@ func NewPostRepo(db *sql.DB) *PostRepo {
 	}
 }
 
-func (r *PostRepo) GetLastestPosts(page int) ([]*model.Post, error) {
+func (r *PostRepo) Lastest(page int) ([]*model.Post, error) {
 
 	stmt := `SELECT p.*, u.username FROM posts p
 	JOIN users u ON p.author = u.id
@@ -34,7 +34,6 @@ func (r *PostRepo) GetLastestPosts(page int) ([]*model.Post, error) {
 		return nil, err
 	}
 
-	config.InfoLog("запрос на последние посты")
 	defer rows.Close()
 
 	for rows.Next() {
@@ -51,15 +50,10 @@ func (r *PostRepo) GetLastestPosts(page int) ([]*model.Post, error) {
 
 	}
 
-	config.InfoLog("Все посты получены")
-	config.InfoLog("Начинаю заполнять посты комментариями")
-
 	posts, err = r.getCommentsForPosts(posts)
 	if err != nil {
 		return nil, err
 	}
-
-	config.InfoLog("Посты заполнены комментариями")
 
 	return posts, nil
 
@@ -80,8 +74,6 @@ func (r *PostRepo) getCommentsForPosts(posts []*model.Post) ([]*model.Post, erro
 	if err != nil {
 		return nil, err
 	}
-
-	config.InfoLog("делаю запрос на получение комментариев")
 
 	defer rows.Close()
 
@@ -105,27 +97,27 @@ func (r *PostRepo) getCommentsForPosts(posts []*model.Post) ([]*model.Post, erro
 		c.Author = u
 
 		comments = append(comments, c)
-		if childComments[c.ParentID] == nil {
+
+		// TODO - решить проблему вложенности комментариев
+
+		if childComments[c.ParentID] == nil && c.ParentID > 0 {
 			childComments[c.ParentID] = make([]*model.Comment, 0)
 		}
 
 		childComments[c.ParentID] = append(childComments[c.ParentID], c)
 	}
 
-	config.InfoLog("распределяю комментарии по комментарием")
-
 	for i, c := range comments {
-		if childComments[c.ID] != nil {
-			comments[i].Comments = childComments[c.ID]
+		com, exist := childComments[c.ID]
+		if exist {
+			comments[i].Comments = com
 			delete(childComments, c.ID)
 		}
 	}
 
-	config.InfoLog("распределяю комментарии по постам")
-
 	for j, p := range posts {
 		for i := 0; i < len(comments); i++ {
-			if comments[i].PostID == p.ID && comments[i].ParentID != 0 {
+			if comments[i].PostID == p.ID && comments[i].ParentID > 0 {
 				posts[j].Comments = append(posts[j].Comments, comments[i])
 				comments = lib.RemoveCommentFromSlice(comments, i)
 				i--
@@ -137,7 +129,7 @@ func (r *PostRepo) getCommentsForPosts(posts []*model.Post) ([]*model.Post, erro
 
 }
 
-func (r *PostRepo) GetPostById(id int64) (*model.Post, error) {
+func (r *PostRepo) GetById(id int64) (*model.Post, error) {
 
 	stmt := `SELECT p.*, u.username FROM posts p
 	JOIN users u ON p.author = u.id
@@ -164,7 +156,7 @@ func (r *PostRepo) GetPostById(id int64) (*model.Post, error) {
 	return stub[0], nil
 }
 
-func (r *PostRepo) InsertPost(post *model.Post) error {
+func (r *PostRepo) Insert(post *model.Post) error {
 	stmt := `INSERT INTO posts (author, title, text, iscommented, countcomments, lastcommenttime)
 	VALUES ($1, $2, $3, $4, $5, $6)`
 
@@ -177,7 +169,7 @@ func (r *PostRepo) InsertPost(post *model.Post) error {
 	return nil
 }
 
-func (r *PostRepo) UpdatePost(post *model.Post) error {
+func (r *PostRepo) Update(post *model.Post) error {
 	stmt := `UPDATE posts
 	SET title = $1, text = $2, iscommented = $3, countcomments = $4, lastcommenttime = $5`
 

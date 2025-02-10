@@ -16,7 +16,7 @@ func NewUserRepo(db *sql.DB) *UserRepo {
 	}
 }
 
-func (r *UserRepo) InsertUser(user *model.User) error {
+func (r *UserRepo) Insert(user *model.User) error {
 	stmt := `INSERT INTO users (username)
 	VALUES ($1)`
 
@@ -29,7 +29,7 @@ func (r *UserRepo) InsertUser(user *model.User) error {
 	return nil
 }
 
-func (r *UserRepo) UpdateUser(user *model.User) error {
+func (r *UserRepo) Update(user *model.User) error {
 	stmt := `UPDATE users SET username = $1 WHERE id = $2`
 
 	_, err := r.db.Exec(stmt, user.Username, user.ID)
@@ -41,7 +41,7 @@ func (r *UserRepo) UpdateUser(user *model.User) error {
 	return nil
 }
 
-func (r *UserRepo) DeleteUserById(id int64) error {
+func (r *UserRepo) DeleteById(id int64) error {
 	stmt := `DELETE FROM users WHERE id = $1`
 
 	_, err := r.db.Exec(stmt, id)

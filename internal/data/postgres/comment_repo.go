@@ -17,7 +17,7 @@ func NewCommentRepo(db *sql.DB) *CommentRepo {
 	}
 }
 
-func (r *CommentRepo) InsertComment(com *model.Comment) error {
+func (r *CommentRepo) Insert(com *model.Comment) error {
 	stmt := `INSERT INTO comments (author, text, post, parent, createAt)
 	VALUES ($1, $2, $3, $4, $5)`
 
@@ -37,7 +37,7 @@ func (r *CommentRepo) InsertComment(com *model.Comment) error {
 	return nil
 }
 
-func (r *CommentRepo) UpdateComment(com *model.Comment) error {
+func (r *CommentRepo) Update(com *model.Comment) error {
 	stmt := `UPDATE comments
 	SET text = $1 WHERE id = $2`
 
