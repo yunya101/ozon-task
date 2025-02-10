@@ -21,7 +21,7 @@ func NewPostRepo(db *sql.DB) *PostRepo {
 
 func (r *PostRepo) GetLastestPosts(page int) ([]*model.Post, error) {
 
-	stmt := `SELECT p.* FROM posts p
+	stmt := `SELECT p.*, u.username FROM posts p
 	JOIN users u ON p.author = u.id
 	LIMIT 10
 	OFFSET $1`
@@ -34,6 +34,7 @@ func (r *PostRepo) GetLastestPosts(page int) ([]*model.Post, error) {
 		return nil, err
 	}
 
+	config.InfoLog("запрос на последние посты")
 	defer rows.Close()
 
 	for rows.Next() {
@@ -50,10 +51,15 @@ func (r *PostRepo) GetLastestPosts(page int) ([]*model.Post, error) {
 
 	}
 
+	config.InfoLog("Все посты получены")
+	config.InfoLog("Начинаю заполнять посты комментариями")
+
 	posts, err = r.getCommentsForPosts(posts)
 	if err != nil {
 		return nil, err
 	}
+
+	config.InfoLog("Посты заполнены комментариями")
 
 	return posts, nil
 
@@ -63,7 +69,7 @@ func (r *PostRepo) getCommentsForPosts(posts []*model.Post) ([]*model.Post, erro
 
 	stmt := `select c.id, c.author, c.text, c.post, c.parent, c.createat, u.username from comments c
 	JOIN users u ON c.author = u.id
-	WHERE post = ANY($1)`
+	WHERE c.post = ANY($1)`
 
 	postIds := make([]int64, 0)
 	for _, p := range posts {
@@ -74,6 +80,8 @@ func (r *PostRepo) getCommentsForPosts(posts []*model.Post) ([]*model.Post, erro
 	if err != nil {
 		return nil, err
 	}
+
+	config.InfoLog("делаю запрос на получение комментариев")
 
 	defer rows.Close()
 
@@ -104,6 +112,8 @@ func (r *PostRepo) getCommentsForPosts(posts []*model.Post) ([]*model.Post, erro
 		childComments[c.ParentID] = append(childComments[c.ParentID], c)
 	}
 
+	config.InfoLog("распределяю комментарии по комментарием")
+
 	for i, c := range comments {
 		if childComments[c.ID] != nil {
 			comments[i].Comments = childComments[c.ID]
@@ -111,11 +121,13 @@ func (r *PostRepo) getCommentsForPosts(posts []*model.Post) ([]*model.Post, erro
 		}
 	}
 
+	config.InfoLog("распределяю комментарии по постам")
+
 	for j, p := range posts {
 		for i := 0; i < len(comments); i++ {
 			if comments[i].PostID == p.ID && comments[i].ParentID != 0 {
 				posts[j].Comments = append(posts[j].Comments, comments[i])
-				lib.RemoveCommentFromSlice(comments, i)
+				comments = lib.RemoveCommentFromSlice(comments, i)
 				i--
 			}
 		}
