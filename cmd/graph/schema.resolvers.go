@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 
+	model1 "github.com/yunya101/ozon-task/cmd/graph/model"
 	"github.com/yunya101/ozon-task/internal/model"
 )
 
@@ -16,12 +17,12 @@ func (r *commentResolver) Parent(ctx context.Context, obj *model.Comment) (int, 
 	panic(fmt.Errorf("not implemented: Parent - parent"))
 }
 
-func (r *mutationResolver) AddComment(ctx context.Context, postID int, parent int, text string, author int) (*model.Comment, error) {
+func (r *mutationResolver) AddComment(ctx context.Context, postID int, parent int, text string, author model1.UserInput) (*model.Comment, error) {
 	comment := &model.Comment{
 		PostID:   int64(postID),
 		ParentID: int64(parent),
 		Text:     text,
-		Author:   &model.User{ID: int64(author)},
+		Author:   &model.User{ID: int64(author.ID), Username: author.Username},
 	}
 
 	if err := r.commentService.AddComment(comment); err != nil {

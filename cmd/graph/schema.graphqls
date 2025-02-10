@@ -23,6 +23,11 @@ type Comment {
   parent: Int64!
 }
 
+input UserInput {
+  id: Int64!
+  username: String!
+}
+
 type User {
   id: Int64!
   username: String!
@@ -34,7 +39,7 @@ type Query {
 }
 
 type Mutation {
-  addComment(postID: Int64!, parent: Int64!, text: String!, author: Int64!): Comment!
+  addComment(postID: Int64!, parent: Int64!, text: String!, author: UserInput!): Comment!
 }
 
 type Subscription {

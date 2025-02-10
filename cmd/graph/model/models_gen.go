@@ -10,3 +10,8 @@ type Query struct {
 
 type Subscription struct {
 }
+
+type UserInput struct {
+	ID       int    `json:"id"`
+	Username string `json:"username"`
+}

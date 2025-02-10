@@ -7,27 +7,29 @@ import (
 	"net/http"
 
 	_ "github.com/lib/pq"
-	redis "github.com/redis/go-redis/v9"
 	"github.com/yunya101/ozon-task/cmd/graph"
 	"github.com/yunya101/ozon-task/cmd/route"
 	"github.com/yunya101/ozon-task/internal/config"
-	data "github.com/yunya101/ozon-task/internal/data/postgres"
-	redisRepository "github.com/yunya101/ozon-task/internal/data/redis"
+	data "github.com/yunya101/ozon-task/internal/data"
+	inmem "github.com/yunya101/ozon-task/internal/data/inmemory"
+	pg "github.com/yunya101/ozon-task/internal/data/postgres"
 	"github.com/yunya101/ozon-task/internal/service"
-	"github.com/yunya101/ozon-task/pkg/cheker"
 )
 
 type Application struct {
-	checker *cheker.Cheker
-	router  *route.Router
+	router *route.Router
 }
 
 func main() {
 
-	config.Port = *flag.Int("port", 8080, "Application port")
-	config.PostgressAddr = *flag.String("postgres", "host=localhost port=5432 user=postgres password=admin dbname=ozontask sslmode=disable", "Postgres database address")
-	config.RedisAddr = *flag.String("redis", config.RedisAddr, "Redis address")
+	port := flag.Int("port", 8080, "Application port")
+	postgressAddr := flag.String("postgres", "host=localhost port=5432 user=postgres password=admin dbname=ozontask sslmode=disable", "Postgres database address")
+	usePostgres := flag.Bool("use-postgres", false, "Use postgres as storage")
 	flag.Parse()
+
+	config.Port = *port
+	config.PostgressAddr = *postgressAddr
+	config.UsePostgres = *usePostgres
 
 	app := NewApp()
 	app.router.SetRoutes()
@@ -36,35 +38,37 @@ func main() {
 
 	config.InfoLog(fmt.Sprintf("starting server on %v port", config.Port))
 
-	go app.checker.CheckPopularity()
-
 	http.ListenAndServe(strPort, app.router.GetMux())
 
 }
 
 func NewApp() *Application {
 
-	db := ConnectToPostgres()
-	redis := ConnectToRedis()
+	var postRepo data.PostRepository
+	var commentRepo data.CommentRepository
+	var userRepo data.UserRepository
 
-	postRepo := data.NewPostRepo(db)
-	commentRepo := data.NewCommentRepo(db)
-	userRepo := data.NewUserRepo(db)
-	redisRepo := redisRepository.NewRedisRepo(redis, postRepo)
+	if config.UsePostgres {
+		db := ConnectToPostgres()
+		postRepo = pg.NewPostRepo(db)
+		commentRepo = pg.NewCommentRepo(db)
+		userRepo = pg.NewUserRepo(db)
+	} else {
+		postRepo = inmem.NewPostRepoInMem()
+		commentRepo = inmem.NewCommRepoInMem()
+		userRepo = inmem.NewUserRepoInMem()
+	}
 
-	postService := service.NewPostService(postRepo, redisRepo)
+	postService := service.NewPostService(postRepo)
 	userService := service.NewUserService(userRepo)
-	commentService := service.NewCommService(commentRepo, redisRepo, postRepo)
+	commentService := service.NewCommService(commentRepo, postRepo)
 
 	resolver := graph.NewResolver(postService, userService, commentService)
-	checker := cheker.Cheker{}
-	checker.SetRedis(redisRepo)
 
 	router := route.NewRouter(resolver, userService, postService)
 
 	return &Application{
-		router:  router,
-		checker: &checker,
+		router: router,
 	}
 
 }
@@ -82,21 +86,8 @@ func ConnectToPostgres() *sql.DB {
 		panic(err)
 	}
 
-	config.InfoLog("connecting to postgres")
+	config.InfoLog(fmt.Sprintf("connecting to postgres db: %s", config.PostgressAddr))
 
 	return db
 
-}
-
-func ConnectToRedis() *redis.Client {
-	client := redis.NewClient(&redis.Options{
-		Addr:     config.RedisAddr,
-		Password: "",
-		DB:       0,
-		Protocol: 3,
-	})
-
-	config.InfoLog("connecting to redis database")
-
-	return client
 }

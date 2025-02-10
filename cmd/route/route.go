@@ -45,7 +45,7 @@ func (r *Router) SetRoutes() {
 		},
 	))
 
-	srv.AddTransport(transport.POST{}) // HTTP POST
+	srv.AddTransport(transport.POST{})
 	srv.AddTransport(transport.Websocket{
 		Upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
@@ -59,8 +59,8 @@ func (r *Router) SetRoutes() {
 	r.mux.Handle("/", playground.Handler("Playground", "/query"))
 	r.mux.Handle("/query", srv)
 
-	r.mux.HandleFunc("/user/add", r.addUser)
-	r.mux.HandleFunc("/post/add", r.addPost)
+	r.mux.HandleFunc("/user/add", r.addUser).Methods("POST")
+	r.mux.HandleFunc("/post/add", r.addPost).Methods("POST")
 
 }
 
