@@ -16,16 +16,12 @@ type CommsService struct {
 	postRepo *data.PostRepo
 }
 
-func (s *CommsService) SetPostRepo(r *data.PostRepo) {
-	s.postRepo = r
-}
-
-func (s *CommsService) SetRepo(r *data.CommentRepo) {
-	s.repo = r
-}
-
-func (s *CommsService) SetRedis(redis *redis.RedisRepo) {
-	s.redis = redis
+func NewCommService(r *data.CommentRepo, redis *redis.RedisRepo, postRepo *data.PostRepo) *CommsService {
+	return &CommsService{
+		repo:     r,
+		redis:    redis,
+		postRepo: postRepo,
+	}
 }
 
 func (s *CommsService) AddComment(com *model.Comment) error {
@@ -47,6 +43,7 @@ func (s *CommsService) AddComment(com *model.Comment) error {
 		post, err = s.postRepo.GetPostById(com.PostID)
 
 		if err != nil {
+			config.ErrorLog(err)
 			return err
 		}
 	}

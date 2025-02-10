@@ -10,8 +10,10 @@ type UserService struct {
 	repo *data.UserRepo
 }
 
-func (s *UserService) SetRepo(r *data.UserRepo) {
-	s.repo = r
+func NewUserService(repo *data.UserRepo) *UserService {
+	return &UserService{
+		repo: repo,
+	}
 }
 
 func (s *UserService) AddUser(user *model.User) error {

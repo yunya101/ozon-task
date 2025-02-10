@@ -21,8 +21,3 @@ CREATE TABLE comments (
     parent INTEGER REFERENCES comments (id),
     createAt TIMESTAMP NOT NULL
 );
-
-CREATE TABLE users_posts (
-    user_id INTEGER REFERENCES users (id),
-    post INTEGER REFERENCES posts (id)
-);

@@ -47,36 +47,24 @@ func NewApp() *Application {
 	db := ConnectToPostgres()
 	redis := ConnectToRedis()
 
-	postRepo := data.PostRepo{}
-	commentRepo := data.CommentRepo{}
-	userRepo := data.UserRepo{}
-	redisRepo := redisRepository.RedisRepo{}
+	postRepo := data.NewPostRepo(db)
+	commentRepo := data.NewCommentRepo(db)
+	userRepo := data.NewUserRepo(db)
+	redisRepo := redisRepository.NewRedisRepo(redis, postRepo)
 
-	redisRepo.SetPostgres(&postRepo)
-	redisRepo.SetRedis(redis)
-	postRepo.SetDB(db)
-	commentRepo.SetDB(db)
-	userRepo.SetDB(db)
+	postService := service.NewPostService(postRepo, redisRepo)
+	userService := service.NewUserService(userRepo)
+	commentService := service.NewCommService(commentRepo, redisRepo, postRepo)
 
-	postService := service.PostService{}
-	userService := service.UserService{}
-	commentService := service.CommsService{}
-
-	postService.SetRedis(&redisRepo)
-	postService.SetRepo(&postRepo)
-	userService.SetRepo(&userRepo)
-	commentService.SetPostRepo(&postRepo)
-	commentService.SetRedis(&redisRepo)
-	commentService.SetRepo(&commentRepo)
-
-	resolver := graph.NewResolver(&postService, &userService, &commentService)
+	resolver := graph.NewResolver(postService, userService, commentService)
 	checker := cheker.Cheker{}
-	checker.SetRedis(&redisRepo)
+	checker.SetRedis(redisRepo)
 
-	router := route.NewRouter(resolver, &userService, &postService)
+	router := route.NewRouter(resolver, userService, postService)
 
 	return &Application{
-		router: router,
+		router:  router,
+		checker: &checker,
 	}
 
 }

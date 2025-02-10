@@ -11,6 +11,7 @@ import (
 	"github.com/yunya101/ozon-task/internal/model"
 )
 
+// Parent is the resolver for the parent field.
 func (r *commentResolver) Parent(ctx context.Context, obj *model.Comment) (int, error) {
 	panic(fmt.Errorf("not implemented: Parent - parent"))
 }
@@ -20,7 +21,7 @@ func (r *mutationResolver) AddComment(ctx context.Context, postID int, parent in
 		PostID:   int64(postID),
 		ParentID: int64(parent),
 		Text:     text,
-		Author:   int64(author),
+		Author:   &model.User{ID: int64(author)},
 	}
 
 	if err := r.commentService.AddComment(comment); err != nil {
@@ -43,7 +44,6 @@ func (r *postResolver) CountComments(ctx context.Context, obj *model.Post) (int3
 }
 
 func (r *queryResolver) Lastest(ctx context.Context, page int) ([]*model.Post, error) {
-
 	posts, err := r.postService.GetLastestPosts(page)
 	if err != nil {
 		return nil, err
@@ -59,16 +59,6 @@ func (r *queryResolver) GetPostByID(ctx context.Context, postID int) (*model.Pos
 	}
 
 	return post, nil
-}
-
-func (r *queryResolver) GetSubsPosts(ctx context.Context, userID int) ([]*model.Post, error) {
-	posts, err := r.postService.GetSubsPostsByUserId(int64(userID))
-
-	if err != nil {
-		return nil, err
-	}
-
-	return posts, err
 }
 
 func (r *subscriptionResolver) CommentAdded(ctx context.Context, postID int) (<-chan *model.Comment, error) {

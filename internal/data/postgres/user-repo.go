@@ -10,8 +10,10 @@ type UserRepo struct {
 	db *sql.DB
 }
 
-func (r *UserRepo) SetDB(db *sql.DB) {
-	r.db = db
+func NewUserRepo(db *sql.DB) *UserRepo {
+	return &UserRepo{
+		db: db,
+	}
 }
 
 func (r *UserRepo) InsertUser(user *model.User) error {

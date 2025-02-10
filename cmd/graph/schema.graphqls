@@ -6,7 +6,7 @@ scalar Int64
 
 type Post {
   id: Int64!
-  author: Int64!
+  author: User!
   title: String!
   text: String!
   comments: [Comment!]!
@@ -16,7 +16,7 @@ type Post {
 
 type Comment {
   id: Int64!
-  author: Int64!
+  author: User!
   text: String!
   postID: Int64!
   comments: [Comment!]!
@@ -31,7 +31,6 @@ type User {
 type Query {
   lastest(page: Int64!): [Post!]!
   getPostById(postID: Int64!): Post!
-  getSubsPosts(userID: Int64!): [Post!]!
 }
 
 type Mutation {

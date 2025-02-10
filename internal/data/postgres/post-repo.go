@@ -3,301 +3,162 @@ package data
 import (
 	"database/sql"
 
+	"github.com/lib/pq"
 	"github.com/yunya101/ozon-task/internal/config"
 	"github.com/yunya101/ozon-task/internal/model"
+	"github.com/yunya101/ozon-task/pkg/lib"
 )
 
 type PostRepo struct {
 	db *sql.DB
 }
 
-func (r *PostRepo) SetDB(db *sql.DB) {
-	r.db = db
-}
-
-func (r *PostRepo) GetPostsIdsByUserId(id int64) ([]int64, error) {
-	stmt := `SELECT post FROM users_posts WHERE user = $1`
-
-	rows, err := r.db.Query(stmt, id)
-
-	if err != nil {
-		return nil, err
+func NewPostRepo(db *sql.DB) *PostRepo {
+	return &PostRepo{
+		db: db,
 	}
-
-	defer rows.Close()
-
-	postsIds := make([]int64, 0)
-
-	for rows.Next() {
-		var postId int64
-		if err := rows.Scan(&postId); err != nil {
-			return nil, err
-		}
-		postsIds = append(postsIds, postId)
-	}
-
-	return postsIds, nil
-
-}
-
-func (r *PostRepo) GetSubsPostsByUserId(id int64) ([]*model.Post, error) {
-
-	stmt := `SELECT * FROM posts p
-	JOIN users_posts up ON p.id = up.post
-	WHERE up.user_id = $1`
-
-	fRows, err := r.db.Query(stmt, id)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer fRows.Close()
-
-	posts := make([]*model.Post, 0)
-
-	for fRows.Next() {
-		p := &model.Post{}
-
-		if err := fRows.Scan(&p.ID, &p.Author, &p.Title, &p.Text, &p.IsCommented, &p.CountComms); err != nil {
-			return nil, err
-		}
-		posts = append(posts, p)
-	}
-
-	for i, p := range posts {
-		p, err := r.getAllUsersFromPost(p)
-
-		if err != nil {
-			return nil, err
-		}
-
-		if p.IsCommented {
-			p, err = r.getAllCommsFromPost(p)
-			if err != nil {
-				return nil, err
-			}
-		}
-		posts[i] = p
-	}
-
-	return posts, nil
-
-}
-
-func (r *PostRepo) getAllUsersFromPost(post *model.Post) (*model.Post, error) {
-	stmt := `SELECT u.* FROM users u
-	JOIN users_posts up ON up.user_id = u.id
-	WHERE up.post = $1`
-
-	rows, err := r.db.Query(stmt, post.ID)
-
-	if err != nil {
-		config.ErrorLog(err)
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	users := make([]*model.User, 0)
-
-	for rows.Next() {
-		u := &model.User{}
-
-		if err := rows.Scan(&u.ID, &u.Username); err != nil {
-			config.ErrorLog(err)
-			return nil, err
-		}
-
-		users = append(users, u)
-	}
-
-	post.Subs = users
-
-	return post, nil
-}
-
-func (r *PostRepo) getAllCommsFromPost(post *model.Post) (*model.Post, error) {
-	stmt := `SELECT * FROM comments WHERE post = $1`
-
-	rows, err := r.db.Query(stmt, post.ID)
-
-	if err != nil {
-		config.ErrorLog(err)
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	comms := make([]*model.Comment, 0)
-
-	for rows.Next() {
-		c := &model.Comment{}
-		var parent sql.NullInt64
-
-		if err := rows.Scan(&c.ID, &c.Author, &c.Text, &c.PostID, &parent, &c.CreatedAt); err != nil {
-			config.ErrorLog(err)
-			return nil, err
-		}
-
-		if parent.Valid {
-			c.ParentID = parent.Int64
-		}
-		comms = append(comms, c)
-	}
-
-	for i, c := range comms {
-		c, err := r.getAllCommsFromComm(c)
-
-		if err != nil {
-			config.ErrorLog(err)
-			return nil, err
-		}
-		comms[i] = c
-	}
-
-	post.Comments = comms
-	return post, nil
-}
-
-func (r *PostRepo) getAllCommsFromComm(comm *model.Comment) (*model.Comment, error) {
-	stmt := `SELECT * FROM comments
-	WHERE parent = $1`
-
-	rows, err := r.db.Query(stmt, comm.ID)
-
-	if err != nil {
-		config.ErrorLog(err)
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	comms := make([]*model.Comment, 0)
-
-	for rows.Next() {
-		c := &model.Comment{}
-
-		var parent sql.NullInt64
-		if err := rows.Scan(&c.ID, &c.Author, &c.Text, &c.PostID, &parent, &c.CreatedAt); err != nil {
-			config.ErrorLog(err)
-			return nil, err
-		}
-
-		if parent.Valid {
-			c.ParentID = parent.Int64
-		}
-
-		c, err = r.getAllCommsFromComm(c)
-
-		if err != nil {
-			return nil, err
-		}
-
-		comms = append(comms, c)
-	}
-
-	comm.Comments = comms
-
-	return comm, nil
 }
 
 func (r *PostRepo) GetLastestPosts(page int) ([]*model.Post, error) {
-	stmt := `SELECT * FROM posts
-	LIMIT 10 OFFSET $1 * 10`
+
+	stmt := `SELECT p.* FROM posts p
+	JOIN users u ON p.author = u.id
+	LIMIT 10
+	OFFSET $1`
+
+	posts := make([]*model.Post, 0)
 
 	rows, err := r.db.Query(stmt, page)
 
 	if err != nil {
-		config.ErrorLog(err)
 		return nil, err
 	}
 
 	defer rows.Close()
 
-	posts := make([]*model.Post, 0)
-
 	for rows.Next() {
 		p := &model.Post{}
+		u := &model.User{}
 
-		if err := rows.Scan(&p.ID, &p.Author, &p.Title, &p.Text, &p.IsCommented, &p.CountComms, &p.LastCommentTime); err != nil {
-			config.ErrorLog(err)
+		if err = rows.Scan(&p.ID, &u.ID, &p.Title, &p.Text, &p.IsCommented, &p.CountComms, &p.LastCommentTime, &u.Username); err != nil {
 			return nil, err
 		}
 
+		p.Author = u
+		p.Comments = make([]*model.Comment, 0)
 		posts = append(posts, p)
+
 	}
 
-	for i, p := range posts {
-		p, err = r.getAllUsersFromPost(p)
-
-		if err != nil {
-			config.ErrorLog(err)
-			return nil, err
-		}
-
-		if p.IsCommented {
-			p, err = r.getAllCommsFromPost(p)
-			if err != nil {
-				config.ErrorLog(err)
-				return nil, err
-			}
-		}
-
-		posts[i] = p
+	posts, err = r.getCommentsForPosts(posts)
+	if err != nil {
+		return nil, err
 	}
 
 	return posts, nil
+
 }
 
-func (r *PostRepo) InsertPost(post *model.Post) error {
-	stmt := `INSERT INTO posts (author, title, text, isCommented, countComments, lastCommentTime)
-	VALUES ($1, $2, $3, $4, $5, $6)`
+func (r *PostRepo) getCommentsForPosts(posts []*model.Post) ([]*model.Post, error) {
 
-	_, err := r.db.Exec(stmt, post.Author, post.Title, post.Text, post.IsCommented, post.CountComms, post.LastCommentTime)
+	stmt := `select c.id, c.author, c.text, c.post, c.parent, c.createat, u.username from comments c
+	JOIN users u ON c.author = u.id
+	WHERE post = ANY($1)`
 
-	if err != nil {
-		return err
+	postIds := make([]int64, 0)
+	for _, p := range posts {
+		postIds = append(postIds, p.ID)
 	}
 
-	config.InfoLog("new post inserted")
-	return nil
+	rows, err := r.db.Query(stmt, pq.Array(postIds))
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	comments := make([]*model.Comment, 0)
+	childComments := make(map[int64][]*model.Comment)
+
+	for rows.Next() {
+		c := &model.Comment{}
+		u := &model.User{}
+
+		var parentNull sql.NullInt64
+
+		if err = rows.Scan(&c.ID, &u.ID, &c.Text, &c.PostID, &parentNull, &c.CreatedAt, &u.Username); err != nil {
+			return nil, err
+		}
+
+		if parentNull.Valid {
+			c.ParentID = parentNull.Int64
+		}
+
+		c.Author = u
+
+		comments = append(comments, c)
+		if childComments[c.ParentID] == nil {
+			childComments[c.ParentID] = make([]*model.Comment, 0)
+		}
+
+		childComments[c.ParentID] = append(childComments[c.ParentID], c)
+	}
+
+	for i, c := range comments {
+		if childComments[c.ID] != nil {
+			comments[i].Comments = childComments[c.ID]
+			delete(childComments, c.ID)
+		}
+	}
+
+	for j, p := range posts {
+		for i := 0; i < len(comments); i++ {
+			if comments[i].PostID == p.ID && comments[i].ParentID != 0 {
+				posts[j].Comments = append(posts[j].Comments, comments[i])
+				lib.RemoveCommentFromSlice(comments, i)
+				i--
+			}
+		}
+	}
+
+	return posts, nil
+
 }
 
 func (r *PostRepo) GetPostById(id int64) (*model.Post, error) {
-	stmt := `SELECT * FROM posts WHERE id = $1`
+
+	stmt := `SELECT p.*, u.username FROM posts p
+	JOIN users u ON p.author = u.id
+	WHERE p.id = $1`
 
 	row := r.db.QueryRow(stmt, id)
 
-	post := &model.Post{}
+	p := &model.Post{}
+	u := &model.User{}
 
-	if err := row.Scan(&post.ID, &post.Author, &post.Title, &post.Text, &post.IsCommented, &post.CountComms, &post.LastCommentTime); err != nil {
+	if err := row.Scan(&p.ID, &u.ID, &p.Title, &p.Text, &p.IsCommented, &p.CountComms, &p.LastCommentTime, &u.Username); err != nil {
 		return nil, err
 	}
 
-	post, err := r.getAllUsersFromPost(post)
+	p.Author = u
 
+	stub := []*model.Post{p}
+
+	stub, err := r.getCommentsForPosts(stub)
 	if err != nil {
 		return nil, err
 	}
 
-	post, err = r.getAllCommsFromPost(post)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return post, nil
-
+	return stub[0], nil
 }
 
-func (r *PostRepo) AddUserInPost(postId int64, userID int64) error {
-	stmt := `INSERT INTO users_posts (user_id, post)
-	VALUES ($1, $2)`
+func (r *PostRepo) InsertPost(post *model.Post) error {
+	stmt := `INSERT INTO posts (author, title, text, iscommented, countcomments, lastcommenttime)
+	VALUES ($1, $2, $3, $4, $5, $6)`
 
-	_, err := r.db.Exec(stmt, userID, postId)
-
+	_, err := r.db.Exec(stmt, post.Author.ID, post.Title, post.Text, post.IsCommented, post.CountComms, post.LastCommentTime)
 	if err != nil {
+		config.ErrorLog(err)
 		return err
 	}
 
@@ -306,23 +167,9 @@ func (r *PostRepo) AddUserInPost(postId int64, userID int64) error {
 
 func (r *PostRepo) UpdatePost(post *model.Post) error {
 	stmt := `UPDATE posts
-	SET title = $1, text = $2, isCommented = $3, countComments = $4, lastCommentTime = $5
-	WHERE id = $6`
+	SET title = $1, text = $2, iscommented = $3, countcomments = $4, lastcommenttime = $5`
 
-	_, err := r.db.Exec(stmt, post.Title, post.Text, post.IsCommented, post.CountComms, post.LastCommentTime, post.ID)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *PostRepo) DeletePostById(id int64) error {
-	stmt := `DELETE FROM posts WHERE id = $1`
-
-	_, err := r.db.Exec(stmt, id)
-
+	_, err := r.db.Exec(stmt, post.Title, post.Text, post.IsCommented, post.CountComms, post.LastCommentTime)
 	if err != nil {
 		return err
 	}

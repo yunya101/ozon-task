@@ -3,6 +3,7 @@ package data
 import (
 	"database/sql"
 
+	"github.com/yunya101/ozon-task/internal/config"
 	"github.com/yunya101/ozon-task/internal/model"
 )
 
@@ -10,8 +11,10 @@ type CommentRepo struct {
 	db *sql.DB
 }
 
-func (r *CommentRepo) SetDB(db *sql.DB) {
-	r.db = db
+func NewCommentRepo(db *sql.DB) *CommentRepo {
+	return &CommentRepo{
+		db: db,
+	}
 }
 
 func (r *CommentRepo) InsertComment(com *model.Comment) error {
@@ -21,12 +24,13 @@ func (r *CommentRepo) InsertComment(com *model.Comment) error {
 	var err error
 
 	if com.ParentID > 0 {
-		_, err = r.db.Exec(stmt, com.Author, com.Text, com.PostID, com.ParentID, com.CreatedAt)
+		_, err = r.db.Exec(stmt, com.Author.ID, com.Text, com.PostID, com.ParentID, com.CreatedAt)
 	} else {
-		_, err = r.db.Exec(stmt, com.Author, com.Text, com.PostID, nil, com.CreatedAt)
+		_, err = r.db.Exec(stmt, com.Author.ID, com.Text, com.PostID, nil, com.CreatedAt)
 	}
 
 	if err != nil {
+		config.ErrorLog(err)
 		return err
 	}
 

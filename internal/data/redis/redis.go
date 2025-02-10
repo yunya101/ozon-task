@@ -15,12 +15,11 @@ type RedisRepo struct {
 	pg   *pg.PostRepo
 }
 
-func (r *RedisRepo) SetRedis(c *redis.Client) {
-	r.repo = c
-}
-
-func (r *RedisRepo) SetPostgres(repo *pg.PostRepo) {
-	r.pg = repo
+func NewRedisRepo(c *redis.Client, pg *pg.PostRepo) *RedisRepo {
+	return &RedisRepo{
+		repo: c,
+		pg:   pg,
+	}
 }
 
 func (r *RedisRepo) AddPost(post *model.Post) error {
