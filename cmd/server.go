@@ -36,6 +36,8 @@ func main() {
 
 	config.InfoLog(fmt.Sprintf("starting server on %v port", config.Port))
 
+	go app.checker.CheckPopularity()
+
 	http.ListenAndServe(strPort, app.router.GetMux())
 
 }
@@ -71,7 +73,7 @@ func NewApp() *Application {
 	checker := cheker.Cheker{}
 	checker.SetRedis(&redisRepo)
 
-	router := route.NewRouter(resolver)
+	router := route.NewRouter(resolver, &userService, &postService)
 
 	return &Application{
 		router: router,
