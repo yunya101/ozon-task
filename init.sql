@@ -1,0 +1,20 @@
+CREATE TABLE users IF NOT EXISTS (
+    id SERIAL PRIMARY KEY NOT NULL,
+    username VARCHAR(20) NOT NULL
+);
+
+CREATE TABLE posts NOT EXISTS(
+    id SERIAL PRIMARY KEY NOT NULL,
+    author INTEGER REFERENCES users (id),
+    title VARCHAR(255) NOT NULL,
+    text VARCHAR(2000) NOT NULL,
+    isCommented boolean NOT NULL,
+);
+
+CREATE TABLE comments NOT EXISTS(
+    id SERIAL PRIMARY KEY NOT NULL,
+    author INTEGER REFERENCES users (id) NOT NULL,
+    text VARCHAR(200) NOT NULL,
+    post INTEGER REFERENCES posts (id) NOT NULL,
+    parent INTEGER REFERENCES comments (id),
+);

@@ -2,9 +2,9 @@ package main
 
 import (
 	"database/sql"
-	"flag"
 	"fmt"
 	"net/http"
+	"os"
 
 	_ "github.com/lib/pq"
 	"github.com/yunya101/ozon-task/cmd/graph"
@@ -22,14 +22,13 @@ type Application struct {
 
 func main() {
 
-	port := flag.Int("port", 8080, "Application port")
-	postgressAddr := flag.String("postgres", "host=localhost port=5432 user=postgres password=admin dbname=ozontask sslmode=disable", "Postgres database address")
-	usePostgres := flag.Bool("use-postgres", false, "Use postgres as storage")
-	flag.Parse()
+	usePostgres := os.Getenv("USE_POSTGRES")
+	postgresDSN := os.Getenv("POSTGRES_DSN")
 
-	config.Port = *port
-	config.PostgressAddr = *postgressAddr
-	config.UsePostgres = *usePostgres
+	if usePostgres == "true" {
+		config.UsePostgres = true
+		config.PostgressAddr = postgresDSN
+	}
 
 	app := NewApp()
 	app.router.SetRoutes()

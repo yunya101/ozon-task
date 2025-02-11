@@ -8,7 +8,7 @@ import (
 
 var (
 	PostgressAddr string
-	Port          int
+	Port          int             = 8080
 	errLog        *log.Logger     = log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 	infoLog       *log.Logger     = log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	Ctx           context.Context = context.Background()

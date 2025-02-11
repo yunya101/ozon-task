@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
+    environment:
+      POSTGRES_DSN: "postgres://admin:admin@db:5432/ozon-task?sslmode=disable"
+      USE_POSTGRES: "true"
+    command: ["./app", "-use-postgres=${USE_POSTGRES}", "-postgres=${POSTGRES_DSN}", "-port=8080"]
+
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: ozon-task
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  pgdata:
+
+networks:
+  go-net:
+    driver: bridge

@@ -1,7 +1,7 @@
 package service
 
 import (
-	"time"
+	"strings"
 
 	"github.com/yunya101/ozon-task/internal/config"
 	data "github.com/yunya101/ozon-task/internal/data"
@@ -34,12 +34,13 @@ func (s *PostService) GetLastestPosts(page int) ([]*model.Post, error) {
 
 func (s *PostService) AddPost(post *model.Post) error {
 
+	post.Text = strings.TrimSpace(post.Text)
+	post.Title = strings.TrimSpace(post.Title)
+
 	if err := apperrors.CheckPost(post); err != nil {
 		config.ErrorLog(err)
 		return err
 	}
-
-	post.LastCommentTime = time.Now()
 
 	err := s.repo.Insert(post)
 

@@ -12,6 +12,8 @@ var (
 	ErrDoesntExist   = errors.New("data doesn't exist")
 	ErrCannotComment = errors.New("now allowed to comment on this post")
 	ErrNotFound      = errors.New("not found")
+	ErrWrongName     = errors.New("wrong username")
+	ErrWrongUserId   = errors.New("wrong user id")
 )
 
 func CheckPost(post *model.Post) error {
@@ -24,6 +26,14 @@ func CheckPost(post *model.Post) error {
 		return ErrLimitText
 	}
 
+	if post.Title == "" || len(post.Title) < 3 {
+		return ErrEmptyText
+	}
+
+	if post.Author.ID <= 0 {
+		return ErrWrongUserId
+	}
+
 	return nil
 }
 
@@ -34,6 +44,14 @@ func CheckComment(com *model.Comment) error {
 
 	if len(com.Text) > 500 {
 		return ErrLimitText
+	}
+
+	return nil
+}
+
+func CheckUser(user *model.User) error {
+	if len(user.Username) > 20 || len(user.Username) < 4 {
+		return ErrWrongName
 	}
 
 	return nil

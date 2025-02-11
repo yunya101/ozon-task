@@ -41,7 +41,7 @@ func (r *PostRepo) Lastest(page int) ([]*model.Post, error) {
 		p := &model.Post{}
 		u := &model.User{}
 
-		if err = rows.Scan(&p.ID, &u.ID, &p.Title, &p.Text, &p.IsCommented, &p.CountComms, &p.LastCommentTime, &u.Username); err != nil {
+		if err = rows.Scan(&p.ID, &u.ID, &p.Title, &p.Text, &p.IsCommented, &u.Username); err != nil {
 			return nil, err
 		}
 
@@ -139,7 +139,7 @@ func (r *PostRepo) GetById(id int64) (*model.Post, error) {
 	p := &model.Post{}
 	u := &model.User{}
 
-	if err := row.Scan(&p.ID, &u.ID, &p.Title, &p.Text, &p.IsCommented, &p.CountComms, &p.LastCommentTime, &u.Username); err != nil {
+	if err := row.Scan(&p.ID, &u.ID, &p.Title, &p.Text, &p.IsCommented, &u.Username); err != nil {
 		return nil, err
 	}
 
@@ -159,7 +159,7 @@ func (r *PostRepo) Insert(post *model.Post) error {
 	stmt := `INSERT INTO posts (author, title, text, iscommented, countcomments, lastcommenttime)
 	VALUES ($1, $2, $3, $4, $5, $6)`
 
-	_, err := r.db.Exec(stmt, post.Author.ID, post.Title, post.Text, post.IsCommented, post.CountComms, post.LastCommentTime)
+	_, err := r.db.Exec(stmt, post.Author.ID, post.Title, post.Text, post.IsCommented)
 	if err != nil {
 		config.ErrorLog(err)
 		return err
@@ -172,7 +172,7 @@ func (r *PostRepo) Update(post *model.Post) error {
 	stmt := `UPDATE posts
 	SET title = $1, text = $2, iscommented = $3, countcomments = $4, lastcommenttime = $5`
 
-	_, err := r.db.Exec(stmt, post.Title, post.Text, post.IsCommented, post.CountComms, post.LastCommentTime)
+	_, err := r.db.Exec(stmt, post.Title, post.Text, post.IsCommented)
 	if err != nil {
 		return err
 	}

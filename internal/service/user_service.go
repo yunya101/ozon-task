@@ -1,8 +1,11 @@
 package service
 
 import (
+	"strings"
+
 	"github.com/yunya101/ozon-task/internal/config"
 	data "github.com/yunya101/ozon-task/internal/data"
+	apperrors "github.com/yunya101/ozon-task/internal/errors"
 	"github.com/yunya101/ozon-task/internal/model"
 )
 
@@ -17,6 +20,14 @@ func NewUserService(repo data.UserRepository) *UserService {
 }
 
 func (s *UserService) AddUser(user *model.User) error {
+
+	user.Username = strings.TrimSpace(user.Username)
+
+	if err := apperrors.CheckUser(user); err != nil {
+		config.ErrorLog(err)
+		return err
+	}
+
 	if err := s.repo.Insert(user); err != nil {
 		config.ErrorLog(err)
 		return err

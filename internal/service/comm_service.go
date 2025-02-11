@@ -48,13 +48,6 @@ func (s *CommsService) AddComment(com *model.Comment) (int64, error) {
 		post.Comments = append(post.Comments, com)
 	}
 
-	post.LastCommentTime = com.CreatedAt
-
-	if err := s.postRepo.Update(post); err != nil {
-		config.ErrorLog(err)
-		return 0, err
-	}
-
 	config.InfoLog("new comment added")
 
 	return id, nil
