@@ -21,27 +21,27 @@ func NewCommService(r data.CommentRepository, postRepo data.PostRepository) *Com
 	}
 }
 
-func (s *CommsService) AddComment(com *model.Comment) error {
+func (s *CommsService) AddComment(com *model.Comment) (int64, error) {
 	if err := apperrors.CheckComment(com); err != nil {
 		config.ErrorLog(err)
-		return err
+		return 0, err
 	}
 
 	com.CreatedAt = time.Now()
 
 	post, err := s.postRepo.GetById(com.PostID)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	if !post.IsCommented {
-		return apperrors.ErrCannotComment
+		return 0, apperrors.ErrCannotComment
 	}
 
 	com.Comments = make([]*model.Comment, 0)
-	if err := s.repo.Insert(com); err != nil {
-		config.ErrorLog(err)
-		return err
+	id, err := s.repo.Insert(com)
+	if err != nil {
+		return 0, err
 	}
 
 	if com.ParentID <= 0 {
@@ -52,10 +52,10 @@ func (s *CommsService) AddComment(com *model.Comment) error {
 
 	if err := s.postRepo.Update(post); err != nil {
 		config.ErrorLog(err)
-		return err
+		return 0, err
 	}
 
 	config.InfoLog("new comment added")
 
-	return nil
+	return id, nil
 }

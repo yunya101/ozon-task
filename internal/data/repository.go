@@ -15,5 +15,5 @@ type UserRepository interface {
 }
 
 type CommentRepository interface {
-	Insert(*model.Comment) error
+	Insert(*model.Comment) (int64, error)
 }

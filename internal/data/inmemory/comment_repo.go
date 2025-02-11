@@ -14,7 +14,7 @@ func NewCommRepoInMem() *CommRepoInMem {
 	}
 }
 
-func (r *CommRepoInMem) Insert(com *model.Comment) error {
+func (r *CommRepoInMem) Insert(com *model.Comment) (int64, error) {
 	com.ID = r.countId
 
 	r.comms[r.countId] = com
@@ -25,5 +25,5 @@ func (r *CommRepoInMem) Insert(com *model.Comment) error {
 
 	r.countId++
 
-	return nil
+	return com.ID, nil
 }

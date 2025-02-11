@@ -25,9 +25,12 @@ func (r *mutationResolver) AddComment(ctx context.Context, postID int, parent in
 		Author:   &model.User{ID: int64(author.ID), Username: author.Username},
 	}
 
-	if err := r.commentService.AddComment(comment); err != nil {
+	id, err := r.commentService.AddComment(comment)
+	if err != nil {
 		return nil, err
 	}
+
+	comment.ID = id
 
 	r.mu.Lock()
 

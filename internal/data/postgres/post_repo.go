@@ -28,6 +28,7 @@ func (r *PostRepo) Lastest(page int) ([]*model.Post, error) {
 
 	posts := make([]*model.Post, 0)
 
+	page = (page - 1) * 10
 	rows, err := r.db.Query(stmt, page)
 
 	if err != nil {
@@ -98,8 +99,6 @@ func (r *PostRepo) getCommentsForPosts(posts []*model.Post) ([]*model.Post, erro
 
 		comments = append(comments, c)
 
-		// TODO - решить проблему вложенности комментариев
-
 		if childComments[c.ParentID] == nil && c.ParentID > 0 {
 			childComments[c.ParentID] = make([]*model.Comment, 0)
 		}
@@ -117,7 +116,7 @@ func (r *PostRepo) getCommentsForPosts(posts []*model.Post) ([]*model.Post, erro
 
 	for j, p := range posts {
 		for i := 0; i < len(comments); i++ {
-			if comments[i].PostID == p.ID && comments[i].ParentID > 0 {
+			if comments[i].PostID == p.ID && comments[i].ParentID == 0 {
 				posts[j].Comments = append(posts[j].Comments, comments[i])
 				comments = lib.RemoveCommentFromSlice(comments, i)
 				i--
