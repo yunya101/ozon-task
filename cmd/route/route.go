@@ -18,11 +18,11 @@ import (
 type Router struct {
 	resolver    *graph.Resolver
 	mux         *mux.Router
-	userService *service.UserService
-	postService *service.PostService
+	userService service.UserServiceInt
+	postService service.PostServiceInt
 }
 
-func NewRouter(r *graph.Resolver, uServ *service.UserService, pServ *service.PostService) *Router {
+func NewRouter(r *graph.Resolver, uServ service.UserServiceInt, pServ service.PostServiceInt) *Router {
 
 	return &Router{
 		resolver:    r,

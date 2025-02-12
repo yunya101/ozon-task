@@ -156,8 +156,8 @@ func (r *PostRepo) GetById(id int64) (*model.Post, error) {
 }
 
 func (r *PostRepo) Insert(post *model.Post) error {
-	stmt := `INSERT INTO posts (author, title, text, iscommented, countcomments, lastcommenttime)
-	VALUES ($1, $2, $3, $4, $5, $6)`
+	stmt := `INSERT INTO posts (author, title, text, iscommented)
+	VALUES ($1, $2, $3, $4)`
 
 	_, err := r.db.Exec(stmt, post.Author.ID, post.Title, post.Text, post.IsCommented)
 	if err != nil {
@@ -170,7 +170,7 @@ func (r *PostRepo) Insert(post *model.Post) error {
 
 func (r *PostRepo) Update(post *model.Post) error {
 	stmt := `UPDATE posts
-	SET title = $1, text = $2, iscommented = $3, countcomments = $4, lastcommenttime = $5`
+	SET title = $1, text = $2, iscommented = $3`
 
 	_, err := r.db.Exec(stmt, post.Title, post.Text, post.IsCommented)
 	if err != nil {

@@ -9,7 +9,7 @@ services:
       - "8080:8080"
     environment:
       POSTGRES_DSN: "postgres://admin:admin@db:5432/ozon-task?sslmode=disable"
-      USE_POSTGRES: "false"
+      USE_POSTGRES: "true"
     command: ["./app", "-use-postgres=${USE_POSTGRES}", "-postgres=${POSTGRES_DSN}", "-port=8080"]
 
   db:

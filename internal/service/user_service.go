@@ -40,7 +40,7 @@ func (s *UserService) AddUser(user *model.User) error {
 func (s *UserService) DeleteUserById(id int64) error {
 	if err := s.repo.DeleteById(id); err != nil {
 		config.ErrorLog(err)
-		return err
+		return apperrors.ErrDoesntExist
 	}
 
 	config.InfoLog("user was deleted")
