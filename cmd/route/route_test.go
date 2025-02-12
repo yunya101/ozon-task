@@ -47,7 +47,7 @@ func TestAddUser_Success(t *testing.T) {
 	mockPostService := new(MockPostService)
 	router := setupRouter(mockUserService, mockPostService)
 
-	user := &model.User{Username: "testuser"}
+	user := &model.User{Username: "yunya"}
 	body, _ := json.Marshal(user)
 
 	mockUserService.On("AddUser", user).Return(nil)
@@ -67,7 +67,7 @@ func TestAddUser_InvalidJSON(t *testing.T) {
 	mockPostService := new(MockPostService)
 	router := setupRouter(mockUserService, mockPostService)
 
-	req, _ := http.NewRequest("POST", "/user/add", bytes.NewBuffer([]byte("{invalid_json}")))
+	req, _ := http.NewRequest("POST", "/user/add", bytes.NewBuffer([]byte("{fignya}")))
 	req.Header.Set("Content-Type", "application/json")
 
 	rr := httptest.NewRecorder()
@@ -82,7 +82,7 @@ func TestAddUser_ServiceError(t *testing.T) {
 	mockPostService := new(MockPostService)
 	router := setupRouter(mockUserService, mockPostService)
 
-	user := &model.User{Username: "testuser"}
+	user := &model.User{Username: "nik"}
 	body, _ := json.Marshal(user)
 
 	mockUserService.On("AddUser", user).Return(errors.New("service error"))
@@ -102,7 +102,7 @@ func TestAddPost_Success(t *testing.T) {
 	mockPostService := new(MockPostService)
 	router := setupRouter(mockUserService, mockPostService)
 
-	post := &model.Post{Title: "Test Post", Text: "This is a test"}
+	post := &model.Post{Title: "Fish", Text: "I like fish"}
 	body, _ := json.Marshal(post)
 
 	mockPostService.On("AddPost", post).Return(nil)
@@ -122,7 +122,7 @@ func TestAddPost_InvalidJSON(t *testing.T) {
 	mockPostService := new(MockPostService)
 	router := setupRouter(mockUserService, mockPostService)
 
-	req, _ := http.NewRequest("POST", "/post/add", bytes.NewBuffer([]byte("{invalid_json}")))
+	req, _ := http.NewRequest("POST", "/post/add", bytes.NewBuffer([]byte("{dich}")))
 	req.Header.Set("Content-Type", "application/json")
 
 	rr := httptest.NewRecorder()
@@ -137,7 +137,7 @@ func TestAddPost_ServiceError(t *testing.T) {
 	mockPostService := new(MockPostService)
 	router := setupRouter(mockUserService, mockPostService)
 
-	post := &model.Post{Title: "Test Post", Text: "This is a test"}
+	post := &model.Post{Title: "Test", Text: "testing"}
 	body, _ := json.Marshal(post)
 
 	mockPostService.On("AddPost", post).Return(errors.New("service error"))

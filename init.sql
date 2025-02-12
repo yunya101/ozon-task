@@ -16,5 +16,6 @@ CREATE TABLE comments (
     author INTEGER REFERENCES users (id) NOT NULL,
     text VARCHAR(200) NOT NULL,
     post INTEGER REFERENCES posts (id) NOT NULL,
-    parent INTEGER REFERENCES comments (id)
+    parent INTEGER REFERENCES comments (id),
+    createAt TIMESTAMP NOT NULL
 );

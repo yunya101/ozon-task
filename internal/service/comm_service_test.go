@@ -27,7 +27,7 @@ func TestCommsService_AddComment_Success(t *testing.T) {
 	service := service.NewCommService(mockCommentRepo, mockPostRepo)
 
 	comment := &model.Comment{
-		Text:   "Nice post!",
+		Text:   "testtest",
 		PostID: 1,
 	}
 
@@ -39,7 +39,7 @@ func TestCommsService_AddComment_Success(t *testing.T) {
 
 	mockPostRepo.On("GetById", int64(1)).Return(post, nil)
 	mockCommentRepo.On("Insert", mock.MatchedBy(func(c *model.Comment) bool {
-		return c.Text == "Nice post!" && c.PostID == 1
+		return c.Text == "testtest" && c.PostID == 1
 	})).Return(int64(1), nil)
 
 	id, err := service.AddComment(comment)
@@ -71,7 +71,7 @@ func TestCommsService_AddComment_PostNotFound(t *testing.T) {
 	service := service.NewCommService(mockCommentRepo, mockPostRepo)
 
 	comment := &model.Comment{
-		Text:   "Great post!",
+		Text:   "уффф",
 		PostID: 99,
 	}
 
@@ -92,7 +92,7 @@ func TestCommsService_AddComment_CommentsNotAllowed(t *testing.T) {
 	service := service.NewCommService(mockCommentRepo, mockPostRepo)
 
 	comment := &model.Comment{
-		Text:   "Interesting!",
+		Text:   "shish",
 		PostID: 2,
 	}
 
@@ -118,7 +118,7 @@ func TestCommsService_AddComment_InsertFail(t *testing.T) {
 	service := service.NewCommService(mockCommentRepo, mockPostRepo)
 
 	comment := &model.Comment{
-		Text:   "Very informative!",
+		Text:   "eshkereeee",
 		PostID: 3,
 	}
 

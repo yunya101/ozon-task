@@ -30,13 +30,13 @@ func TestUserService_AddUser_Success(t *testing.T) {
 	mockRepo := new(MockUserRepository)
 	service := service.NewUserService(mockRepo)
 
-	user := &model.User{Username: "   test_user   "}
+	user := &model.User{Username: "   Mike   "}
 	mockRepo.On("Insert", mock.Anything).Return(nil)
 
 	err := service.AddUser(user)
 
 	assert.NoError(t, err)
-	assert.Equal(t, "test_user", user.Username)
+	assert.Equal(t, "Mike", user.Username)
 	mockRepo.AssertCalled(t, "Insert", user)
 	mockRepo.AssertExpectations(t)
 }

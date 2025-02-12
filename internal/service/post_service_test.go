@@ -44,8 +44,8 @@ func TestPostService_GetLastestPosts_Success(t *testing.T) {
 	service := service.NewPostService(mockRepo)
 
 	expectedPosts := []*model.Post{
-		{ID: 1, Title: "Post 1", Text: "Content 1"},
-		{ID: 2, Title: "Post 2", Text: "Content 2"},
+		{ID: 1, Title: "Post 1", Text: "test test test"},
+		{ID: 2, Title: "Post 2", Text: "test2 test2 test2"},
 	}
 
 	mockRepo.On("Lastest", 1).Return(expectedPosts, nil)
@@ -74,14 +74,14 @@ func TestPostService_AddPost_Success(t *testing.T) {
 	mockRepo := new(MockPostRepository)
 	service := service.NewPostService(mockRepo)
 
-	post := &model.Post{Title: "  New Post  ", Text: "  Some content  ", Author: &model.User{ID: 1}, IsCommented: true}
+	post := &model.Post{Title: "  post  ", Text: "  text  ", Author: &model.User{ID: 1}, IsCommented: true}
 	mockRepo.On("Insert", mock.Anything).Return(nil)
 
 	err := service.AddPost(post)
 
 	assert.NoError(t, err)
-	assert.Equal(t, "New Post", post.Title)
-	assert.Equal(t, "Some content", post.Text)
+	assert.Equal(t, "post", post.Title)
+	assert.Equal(t, "text", post.Text)
 	mockRepo.AssertExpectations(t)
 }
 
@@ -102,13 +102,13 @@ func TestPostService_GetPostById_Success(t *testing.T) {
 	mockRepo := new(MockPostRepository)
 	service := service.NewPostService(mockRepo)
 
-	expectedPost := &model.Post{ID: 1, Title: "Found Post", Text: "Some content"}
+	expectedPost := &model.Post{ID: 1, Title: "Post", Text: "zizziz"}
 	mockRepo.On("GetById", int64(1)).Return(expectedPost, nil)
 
 	post, err := service.GetPostById(1)
 
 	assert.NoError(t, err)
-	assert.Equal(t, "Found Post", post.Title)
+	assert.Equal(t, expectedPost.Title, post.Title)
 	mockRepo.AssertExpectations(t)
 }
 
@@ -116,12 +116,12 @@ func TestPostService_GetPostById_Fail(t *testing.T) {
 	mockRepo := new(MockPostRepository)
 	service := service.NewPostService(mockRepo)
 
-	mockRepo.On("GetById", int64(1)).Return(nil, errors.New("not found"))
+	mockRepo.On("GetById", int64(1)).Return(nil, apperrors.ErrNotFound)
 
 	post, err := service.GetPostById(1)
 
 	assert.Error(t, err)
 	assert.Nil(t, post)
-	assert.Equal(t, "not found", err.Error())
+	assert.Equal(t, apperrors.ErrNotFound, err)
 	mockRepo.AssertExpectations(t)
 }
